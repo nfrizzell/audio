@@ -12,5 +12,6 @@ Reference:
    - HAL/LL Drivers:
       - [Overview](https://github.com/STMicroelectronics/STM32CubeF3/blob/master/Documentation/STM32CubeF3GettingStarted.pdf)
       - [Documentation](https://www.st.com/resource/en/user_manual/dm00122016-description-of-stm32f3-hal-and-low-layer-drivers-stmicroelectronics.pdf)
+      - [Sample firmware](https://github.com/STMicroelectronics/STM32CubeF3/tree/master/Projects/STM32F3-Discovery)
    - Toolchain
        - [stlink-tools](https://github.com/stlink-org/stlink/tree/develop/doc)

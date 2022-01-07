@@ -138,6 +138,10 @@ $(BUILD_DIR):
 
 clean:
 	-rm -rf $(BUILD_DIR)
+
+FLASH_ADDR = 0x08000000
+flash:
+	st-flash write $(BUILD_DIR)/make.bin $(FLASH_ADDR)
   
 # dependencies
 -include $(wildcard $(BUILD_DIR)/*.d)

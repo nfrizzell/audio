@@ -7,31 +7,9 @@ OPT = -Og
 
 BUILD_DIR = build
 
-C_SOURCES =  \
-firmware/main.c \
-firmware/stm32f3xx_it.c \
-firmware/stm32f3xx_hal_msp.c \
-firmware/drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_usb.c \
-firmware/drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_i2c.c \
-firmware/drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_i2c_ex.c \
-firmware/drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal.c \
-firmware/drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_rcc.c \
-firmware/drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_rcc_ex.c \
-firmware/drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_gpio.c \
-firmware/drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_dma.c \
-firmware/drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_cortex.c \
-firmware/drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_pwr.c \
-firmware/drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_pwr_ex.c \
-firmware/drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_flash.c \
-firmware/drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_flash_ex.c \
-firmware/drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_exti.c \
-firmware/drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_spi.c \
-firmware/drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_spi_ex.c \
-firmware/drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_tim.c \
-firmware/drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_tim_ex.c \
-firmware/drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_pcd.c \
-firmware/drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_pcd_ex.c \
-firmware/system_stm32f3xx.c  
+C_SOURCES = \
+$(shell find ./firmware/src -name '*.c') \
+$(shell find ./firmware/drivers/STM32F3xx_HAL_Driver/Src -name '*.c') 
 
 ASM_SOURCES = firmware/asm/startup_stm32f303xc.s
 
@@ -52,9 +30,6 @@ endif
 HEX = $(CP) -O ihex
 BIN = $(CP) -O binary -S
  
-#######################################
-# CFLAGS
-#######################################
 # cpu
 CPU = -mcpu=cortex-m4
 
@@ -81,11 +56,11 @@ AS_INCLUDES =
 
 # C includes
 C_INCLUDES =  \
--Ifirmware \
--Ifirmware/drivers/STM32F3xx_HAL_Driver/Inc \
--Ifirmware/drivers/STM32F3xx_HAL_Driver/Inc/Legacy \
--Ifirmware/drivers/CMSIS/Device/ST/STM32F3xx/Include \
--Ifirmware/drivers/CMSIS/Include
+-Ifirmware/src \
+-Ifirmware/drivers/STM32F3xx_HAL_Driver/Inc/ \
+-Ifirmware/drivers/STM32F3xx_HAL_Driver/Inc/Legacy/ \
+-Ifirmware/drivers/CMSIS/Device/ST/STM32F3xx/Include/ \
+-Ifirmware/drivers/CMSIS/Include/
 
 # compile gcc flags
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections

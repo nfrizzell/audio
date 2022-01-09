@@ -9,21 +9,30 @@
  *
  */
 
+#include <stdlib.h>
+
+#include "stm32f3xx_ll_gpio.h"
+
 #include "main.h"
 
-void SystemClock_Config(void);
+void system_clock_config(void);
+GPIO_TypeDef *gpio_init(void);
 
 int main(void)
 {
-	SystemClock_Config();
-	
+	/* LL_GPIO_InitTypeDef pins; */
+	system_clock_config();
+
+	GPIO_TypeDef *port = gpio_init();
+	LL_GPIO_SetOutputPin(port, LL_GPIO_PIN_11);
+
 	while (1)
 	{
 
 	}
 }
 
-void SystemClock_Config(void)
+void system_clock_config(void)
 {
 	/* Set FLASH latency */
 	LL_FLASH_SetLatency(LL_FLASH_LATENCY_2);
@@ -63,6 +72,23 @@ void SystemClock_Config(void)
 
 	/* Update CMSIS variable (which can be updated also through SystemCoreClockUpdate function) */
 	LL_SetSystemCoreClock(72000000);
+}
+
+GPIO_TypeDef *gpio_init(void)
+{
+	LL_GPIO_InitTypeDef gpio_config;
+	GPIO_TypeDef * port = malloc(sizeof(GPIO_TypeDef));
+	
+	LL_GPIO_StructInit(&gpio_config);
+	gpio_config.Pin = LL_GPIO_PIN_11;
+	gpio_config.Mode = LL_GPIO_MODE_OUTPUT;
+
+	if (LL_GPIO_Init(port, &gpio_config) != SUCCESS)
+	{
+		
+	}
+
+	return port;
 }
 
 #ifdef  USE_FULL_ASSERT

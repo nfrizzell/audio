@@ -15,3 +15,6 @@ Reference:
       - [Sample firmware](https://github.com/STMicroelectronics/STM32CubeF3/tree/master/Projects/STM32F3-Discovery)
    - Toolchain
        - [stlink-tools](https://github.com/stlink-org/stlink/tree/develop/doc)
+   - [Linux kernel](https://www.kernel.org/doc/html/latest/)
+       - [Symbol search tool](https://elixir.bootlin.com/linux/latest/source)
+       - [LDD3](https://bootlin.com/doc/books/ldd3.pdf)

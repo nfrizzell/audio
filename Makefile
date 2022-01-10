@@ -49,6 +49,7 @@ AS_DEFS =
 # C defines
 C_DEFS =  \
 -DUSE_FULL_LL_DRIVER \
+-DUSE_FULL_ASSERT \
 -DSTM32F303xC
 
 # AS includes

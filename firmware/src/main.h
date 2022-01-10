@@ -16,81 +16,82 @@
 extern "C" {
 #endif
 
-#include "stm32f3xx_ll_bus.h"
+#include "stm32f3xx_hal.h"
+
+#include "stm32f3xx_ll_i2c.h"
 #include "stm32f3xx_ll_rcc.h"
+#include "stm32f3xx_ll_bus.h"
 #include "stm32f3xx_ll_system.h"
+#include "stm32f3xx_ll_exti.h"
+#include "stm32f3xx_ll_cortex.h"
 #include "stm32f3xx_ll_utils.h"
 #include "stm32f3xx_ll_pwr.h"
-#include "stm32f3xx_ll_exti.h"
-#include "stm32f3xx_ll_gpio.h"
-#include "stm32f3xx_ll_adc.h"
-#include "stm32f3xx_ll_comp.h"
-#include "stm32f3xx_ll_cortex.h"
-#include "stm32f3xx_ll_crc.h"
-#include "stm32f3xx_ll_dac.h"
 #include "stm32f3xx_ll_dma.h"
-#include "stm32f3xx_ll_hrtim.h"
-#include "stm32f3xx_ll_i2c.h"
-#include "stm32f3xx_ll_iwdg.h"
-#include "stm32f3xx_ll_opamp.h"
-#include "stm32f3xx_ll_rtc.h"
 #include "stm32f3xx_ll_spi.h"
-#include "stm32f3xx_ll_tim.h"
-#include "stm32f3xx_ll_usart.h"
-#include "stm32f3xx_ll_wwdg.h"
+#include "stm32f3xx_ll_gpio.h"
 
 #if defined(USE_FULL_ASSERT)
 #include "stm32_assert.h"
 #endif /* USE_FULL_ASSERT */
 
-#define LED3_PIN                           LL_GPIO_PIN_9
-#define LED3_GPIO_PORT                     GPIOE
-#define LED3_GPIO_CLK_ENABLE()             LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOE)
-
-#define LED4_PIN                           LL_GPIO_PIN_8
-#define LED4_GPIO_PORT                     GPIOE
-#define LED4_GPIO_CLK_ENABLE()             LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOE)
-
-#define LED5_PIN                           LL_GPIO_PIN_10
-#define LED5_GPIO_PORT                     GPIOE
-#define LED5_GPIO_CLK_ENABLE()             LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOE)
-
-#define LED6_PIN                           LL_GPIO_PIN_15
-#define LED6_GPIO_PORT                     GPIOE
-#define LED6_GPIO_CLK_ENABLE()             LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOE)
-
-#define LED7_PIN                           LL_GPIO_PIN_11
-#define LED7_GPIO_PORT                     GPIOE
-#define LED7_GPIO_CLK_ENABLE()             LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOE)
-
-#define LED8_PIN                           LL_GPIO_PIN_14
-#define LED8_GPIO_PORT                     GPIOE
-#define LED8_GPIO_CLK_ENABLE()             LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOE)
-
-#define LED9_PIN                           LL_GPIO_PIN_12
-#define LED9_GPIO_PORT                     GPIOE
-#define LED9_GPIO_CLK_ENABLE()             LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOE)
-
-#define LED10_PIN                           LL_GPIO_PIN_13
-#define LED10_GPIO_PORT                     GPIOE
-#define LED10_GPIO_CLK_ENABLE()             LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOE)
-
-#define USER_BUTTON_PIN                         LL_GPIO_PIN_0
-#define USER_BUTTON_GPIO_PORT                   GPIOA
-#define USER_BUTTON_GPIO_CLK_ENABLE()           LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA)
-#define USER_BUTTON_EXTI_LINE                   LL_EXTI_LINE_0
-#define USER_BUTTON_EXTI_IRQn                   EXTI0_IRQn
-#define USER_BUTTON_EXTI_LINE_ENABLE()          LL_EXTI_EnableIT_0_31(USER_BUTTON_EXTI_LINE)
-#define USER_BUTTON_EXTI_FALLING_TRIG_ENABLE()  LL_EXTI_EnableFallingTrig_0_31(USER_BUTTON_EXTI_LINE)
-#define USER_BUTTON_SYSCFG_SET_EXTI()           do {                                                                     \
-                                                  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_SYSCFG);                  \
-                                                  LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTA, LL_SYSCFG_EXTI_LINE0);  \
-                                                } while(0)
-#define USER_BUTTON_IRQHANDLER                  EXTI0_IRQHandler
-
-#define LED_BLINK_FAST  200
-#define LED_BLINK_SLOW  500
-#define LED_BLINK_ERROR 1000
+#define DRDY_Pin LL_GPIO_PIN_2
+#define DRDY_GPIO_Port GPIOE
+#define CS_I2C_SPI_Pin LL_GPIO_PIN_3
+#define CS_I2C_SPI_GPIO_Port GPIOE
+#define MEMS_INT3_Pin LL_GPIO_PIN_4
+#define MEMS_INT3_GPIO_Port GPIOE
+#define MEMS_INT4_Pin LL_GPIO_PIN_5
+#define MEMS_INT4_GPIO_Port GPIOE
+#define OSC32_IN_Pin LL_GPIO_PIN_14
+#define OSC32_IN_GPIO_Port GPIOC
+#define OSC32_OUT_Pin LL_GPIO_PIN_15
+#define OSC32_OUT_GPIO_Port GPIOC
+#define OSC_IN_Pin LL_GPIO_PIN_0
+#define OSC_IN_GPIO_Port GPIOF
+#define OSC_OUT_Pin LL_GPIO_PIN_1
+#define OSC_OUT_GPIO_Port GPIOF
+#define B1_Pin LL_GPIO_PIN_0
+#define B1_GPIO_Port GPIOA
+#define SPI1_SCK_Pin LL_GPIO_PIN_5
+#define SPI1_SCK_GPIO_Port GPIOA
+#define SPI1_MISO_Pin LL_GPIO_PIN_6
+#define SPI1_MISO_GPIO_Port GPIOA
+#define SPI1_MISOA7_Pin LL_GPIO_PIN_7
+#define SPI1_MISOA7_GPIO_Port GPIOA
+#define LD4_Pin LL_GPIO_PIN_8
+#define LD4_GPIO_Port GPIOE
+#define LD3_Pin LL_GPIO_PIN_9
+#define LD3_GPIO_Port GPIOE
+#define LD5_Pin LL_GPIO_PIN_10
+#define LD5_GPIO_Port GPIOE
+#define LD7_Pin LL_GPIO_PIN_11
+#define LD7_GPIO_Port GPIOE
+#define LD9_Pin LL_GPIO_PIN_12
+#define LD9_GPIO_Port GPIOE
+#define LD10_Pin LL_GPIO_PIN_13
+#define LD10_GPIO_Port GPIOE
+#define LD8_Pin LL_GPIO_PIN_14
+#define LD8_GPIO_Port GPIOE
+#define LD6_Pin LL_GPIO_PIN_15
+#define LD6_GPIO_Port GPIOE
+#define DM_Pin LL_GPIO_PIN_11
+#define DM_GPIO_Port GPIOA
+#define DP_Pin LL_GPIO_PIN_12
+#define DP_GPIO_Port GPIOA
+#define SWDIO_Pin LL_GPIO_PIN_13
+#define SWDIO_GPIO_Port GPIOA
+#define SWCLK_Pin LL_GPIO_PIN_14
+#define SWCLK_GPIO_Port GPIOA
+#define SWO_Pin LL_GPIO_PIN_3
+#define SWO_GPIO_Port GPIOB
+#define I2C1_SCL_Pin LL_GPIO_PIN_6
+#define I2C1_SCL_GPIO_Port GPIOB
+#define I2C1_SDA_Pin LL_GPIO_PIN_7
+#define I2C1_SDA_GPIO_Port GPIOB
+#define MEMS_INT1_Pin LL_GPIO_PIN_0
+#define MEMS_INT1_GPIO_Port GPIOE
+#define MEMS_INT2_Pin LL_GPIO_PIN_1
+#define MEMS_INT2_GPIO_Port GPIOE
 
 #ifdef __cplusplus
 }

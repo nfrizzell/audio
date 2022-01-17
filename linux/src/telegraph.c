@@ -22,6 +22,16 @@ static void telegraph_delete(struct kref *kref)
 	kfree(dev);
 }
 
+static struct file_operations telegraph_fops = {
+	.owner = THIS_MODULE
+};
+
+static struct usb_class_driver telegraph_class_driver = {
+	.name = "usb/telegraph%d",
+	.fops = &telegraph_fops,
+	.minor_base = USB_TELEGRAPH_MINOR_BASE
+};
+
 static int telegraph_probe(struct usb_interface *interface, const struct usb_device_id *id)
 {
 	struct telegraph_device *dev = NULL;
@@ -45,27 +55,41 @@ static int telegraph_probe(struct usb_interface *interface, const struct usb_dev
 
 		/* Bulk out endpoint */
 		if (!dev->bulk_out_endpoint_addr &&
-		!(endpoint->bEndpointAddress & USB_DIR_IN) &&
-		((endpoint->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
-		USB_ENDPOINT_XFER_BULK)) {
+		    !(endpoint->bEndpointAddress & USB_DIR_IN) &&
+		    ((endpoint->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
+		    USB_ENDPOINT_XFER_BULK)) {
 			dev->bulk_out_endpoint_addr = endpoint->bEndpointAddress;
 		}
 
 		/* Control out endpoint */
 		else if (!dev->ctrl_out_endpoint_addr &&
-		!(endpoint->bEndpointAddress & USB_DIR_IN) &&
-		((endpoint->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
-		USB_ENDPOINT_XFER_CONTROL)) {
+		    !(endpoint->bEndpointAddress & USB_DIR_IN) &&
+		    ((endpoint->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
+		    USB_ENDPOINT_XFER_CONTROL)) {
 			dev->ctrl_out_endpoint_addr = endpoint->bEndpointAddress;
 		}
 
 		/* Control in endpoint */
 		else if (!dev->ctrl_in_endpoint_addr &&
-		(endpoint->bEndpointAddress & USB_DIR_IN) &&
-		((endpoint->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
-		USB_ENDPOINT_XFER_CONTROL)) {
+		    (endpoint->bEndpointAddress & USB_DIR_IN) &&
+		    ((endpoint->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
+		    USB_ENDPOINT_XFER_CONTROL)) {
 
 		}
+	}
+
+	if (!(dev->bulk_out_endpoint_addr &&
+	    !(dev->ctrl_in_endpoint_addr) &&
+	    !(dev->ctrl_out_endpoint_addr))) {
+		goto error;
+	}
+
+	usb_set_intfdata(interface, dev);
+
+	retval = usb_register_dev(interface, &telegraph_class_driver);
+	if (retval) {
+		printk(KERN_ERR, "Minor number not available");
+		goto error;
 	}
 
 	return 0;

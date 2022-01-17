@@ -7,6 +7,8 @@
 #define USB_TELEGRAPH_VENDOR_ID 0x0483
 #define USB_TELEGRAPH_PRODUCT_ID 0x374b
 
+#define USB_TELEGRAPH_MINOR_BASE 192
+
 struct telegraph_device {
 	struct usb_device * usb_dev;
 	struct usb_interface * usb_intf;

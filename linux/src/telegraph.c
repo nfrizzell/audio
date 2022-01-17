@@ -1,17 +1,80 @@
+#include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/errno.h>
+#include <linux/slab.h>
 #include <linux/usb.h>
-#include <linux/hid-ids.h>
+
+#include "telegraph.h"
 
 const static struct usb_device_id telegraph_id_table[] = {
 	/* ST-LINK/V2.1 */
-	{ USB_DEVICE(USB_VENDOR_ID_STM_0, 0x374b) }
+	{ USB_DEVICE(USB_TELEGRAPH_VENDOR_ID, USB_TELEGRAPH_PRODUCT_ID) },
+	{}
 };
 
-static int telegraph_probe(struct usb_interface *intf, const struct usb_device_id *id)
+MODULE_DEVICE_TABLE(usb, telegraph_id_table);
+
+static void telegraph_delete(struct kref *kref)
 {
-	
+	struct telegraph_device *dev = to_telegraph_device(kref);
+
+	usb_put_dev(dev->usb_dev);
+	kfree(dev);
+}
+
+static int telegraph_probe(struct usb_interface *interface, const struct usb_device_id *id)
+{
+	struct telegraph_device *dev = NULL;
+	struct usb_host_interface *interface_desc;
+	struct usb_endpoint_descriptor *endpoint;
+	int i;
+	int retval = -ENOMEM;
+
+	dev = kzalloc(sizeof(struct telegraph_device), GFP_KERNEL);
+	if (dev == NULL) {
+		printk(KERN_ERR "Failed to allocate memory for device");
+		goto error;
+	}
+	kref_init(&dev->kref);
+
+	dev->usb_dev = usb_get_dev(interface_to_usbdev(interface));
+	dev->usb_intf = interface;
+
+	for (i = 0; i < interface_desc->desc.bNumEndpoints; i++) {
+		endpoint = &(interface_desc->endpoint[i].desc);
+
+		/* Bulk out endpoint */
+		if (!dev->bulk_out_endpoint_addr &&
+		!(endpoint->bEndpointAddress & USB_DIR_IN) &&
+		((endpoint->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
+		USB_ENDPOINT_XFER_BULK)) {
+			dev->bulk_out_endpoint_addr = endpoint->bEndpointAddress;
+		}
+
+		/* Control out endpoint */
+		else if (!dev->ctrl_out_endpoint_addr &&
+		!(endpoint->bEndpointAddress & USB_DIR_IN) &&
+		((endpoint->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
+		USB_ENDPOINT_XFER_CONTROL)) {
+			dev->ctrl_out_endpoint_addr = endpoint->bEndpointAddress;
+		}
+
+		/* Control in endpoint */
+		else if (!dev->ctrl_in_endpoint_addr &&
+		(endpoint->bEndpointAddress & USB_DIR_IN) &&
+		((endpoint->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
+		USB_ENDPOINT_XFER_CONTROL)) {
+
+		}
+	}
+
 	return 0;
+
+error:
+	/* Deallocate if no longer in use */
+	if (dev)
+		kref_put(&(dev->kref), telegraph_delete);
+	return retval;
 }
 
 static void telegraph_disconnect(struct usb_interface *intf)

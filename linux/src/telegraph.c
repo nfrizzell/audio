@@ -6,6 +6,8 @@
 
 #include "telegraph.h"
 
+static struct usb_driver telegraph_driver;
+
 const static struct usb_device_id telegraph_id_table[] = {
 	/* ST-LINK/V2.1 */
 	{ USB_DEVICE(USB_TELEGRAPH_VENDOR_ID, USB_TELEGRAPH_PRODUCT_ID) },
@@ -22,8 +24,99 @@ static void telegraph_delete(struct kref *kref)
 	kfree(dev);
 }
 
+static int telegraph_open(struct inode *inode, struct file *file)
+{
+	struct telegraph_device *dev;
+	struct usb_interface *interface;
+	int subminor;
+
+	subminor = iminor(inode);
+	interface = usb_find_interface(&telegraph_driver, subminor);
+	if (!interface) {
+		printk(KERN_ERR "Can't find device for minor number %d");
+		return -ENODEV;
+	}
+
+	dev = usb_get_intfdata(interface);
+	if (!dev) 
+		return -ENODEV;
+
+	kref_get(&(dev->kref));
+	file->private_data = dev;
+	
+	return 0;
+}
+
+static int telegraph_release(struct inode *inode, struct file *file)
+{
+	struct telegraph_device *dev;
+
+	dev = (struct telegraph_device *)file->private_data;
+	if (dev == NULL)
+		return -ENODEV;
+	
+	kref_put(&dev->kref, telegraph_delete);
+	return 0;
+}
+
+static ssize_t telegraph_read(struct file *file, char __user *buffer, size_t count, loff_t *ppos)
+{
+	struct telegraph_device *dev;
+	int retval = 0;
+
+	dev = (struct telegraph_device *)file->private_data;
+
+	// TODO
+
+	return retval;
+}
+
+static ssize_t telegraph_write(struct file *file, const char __user *user_buffer, size_t count, loff_t *ppos)
+{
+	struct telegraph_device *dev;
+	int retval = 0;
+	struct urb *urb = NULL;
+	char *buf = NULL;
+
+	dev = (struct telegraph_device *)file->private_data;
+	/* Empty input */
+	if (count == 0)
+		goto exit;
+
+	urb = usb_alloc_urb(0, GFP_KERNEL);
+	if (!urb) {
+		retval = -ENOMEM;
+		goto error;
+	}
+
+	buf = usb_alloc_coherent(dev->usb_dev, count, GFP_KERNEL, &(urb->transfer_dma));
+	if (!buf) {
+		retval = -ENOMEM;
+		goto error;
+	}
+
+	if (copy_from_user(buf, user_buffer, count)) {
+		retval = -EFAULT;
+		goto error;
+	}
+
+	//TODO
+
+exit:
+	return count;
+
+error:
+	kfree(buf);
+	return retval;
+
+}
+
 static struct file_operations telegraph_fops = {
-	.owner = THIS_MODULE
+	.owner = THIS_MODULE,
+	.open = &telegraph_open,
+	.release = &telegraph_release,
+	.read = &telegraph_read,
+	.write = &telegraph_write
 };
 
 static struct usb_class_driver telegraph_class_driver = {
@@ -84,6 +177,7 @@ static int telegraph_probe(struct usb_interface *interface, const struct usb_dev
 		goto error;
 	}
 
+	/* Store the telegraph_device in the interface struct */
 	usb_set_intfdata(interface, dev);
 
 	retval = usb_register_dev(interface, &telegraph_class_driver);

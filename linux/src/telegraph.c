@@ -71,6 +71,11 @@ static ssize_t telegraph_read(struct file *file, char __user *buffer, size_t cou
 	return retval;
 }
 
+static void telegraph_write_control_callback(struct urb *urb)
+{
+
+}
+
 static ssize_t telegraph_write(struct file *file, const char __user *user_buffer, size_t count, loff_t *ppos)
 {
 	struct telegraph_device *dev;
@@ -106,6 +111,7 @@ exit:
 	return count;
 
 error:
+	usb_free_urb(urb);
 	kfree(buf);
 	return retval;
 
@@ -143,6 +149,7 @@ static int telegraph_probe(struct usb_interface *interface, const struct usb_dev
 	dev->usb_dev = usb_get_dev(interface_to_usbdev(interface));
 	dev->usb_intf = interface;
 
+	interface_desc = interface->cur_altsetting;
 	for (i = 0; i < interface_desc->desc.bNumEndpoints; i++) {
 		endpoint = &(interface_desc->endpoint[i].desc);
 
@@ -154,20 +161,11 @@ static int telegraph_probe(struct usb_interface *interface, const struct usb_dev
 			dev->bulk_out_endpoint_addr = endpoint->bEndpointAddress;
 		}
 
-		/* Control out endpoint */
-		else if (!dev->ctrl_out_endpoint_addr &&
-		    !(endpoint->bEndpointAddress & USB_DIR_IN) &&
-		    ((endpoint->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
-		    USB_ENDPOINT_XFER_CONTROL)) {
-			dev->ctrl_out_endpoint_addr = endpoint->bEndpointAddress;
-		}
-
 		/* Control in endpoint */
 		else if (!dev->ctrl_in_endpoint_addr &&
 		    (endpoint->bEndpointAddress & USB_DIR_IN) &&
 		    ((endpoint->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
 		    USB_ENDPOINT_XFER_CONTROL)) {
-
 		}
 	}
 
@@ -183,6 +181,7 @@ static int telegraph_probe(struct usb_interface *interface, const struct usb_dev
 	retval = usb_register_dev(interface, &telegraph_class_driver);
 	if (retval) {
 		printk(KERN_ERR, "Minor number not available");
+		usb_set_intfdata(interface, NULL);
 		goto error;
 	}
 
@@ -195,9 +194,19 @@ error:
 	return retval;
 }
 
-static void telegraph_disconnect(struct usb_interface *intf)
+static void telegraph_disconnect(struct usb_interface *interface)
 {
-	
+	struct telegraph_device *dev;
+	int minor = interface->minor;
+
+	dev = usb_get_intfdata(interface);
+	usb_set_intfdata(interface, NULL);
+
+	usb_deregister_dev(interface, &telegraph_class_driver);
+
+	kref_put(&dev->kref, telegraph_delete);
+
+	printk(KERN_INFO "USB telegraph %d disconnected", minor);
 }
 
 static struct usb_driver telegraph_driver = {
@@ -209,14 +218,14 @@ static struct usb_driver telegraph_driver = {
 
 static int __init telegraph_init(void)
 {
-	int result;
+	int retval;
 
-	result = usb_register(&telegraph_driver);
-	if (result) {
+	retval = usb_register(&telegraph_driver);
+	if (retval) {
 	
 	}
 
-	return result;
+	return retval;
 }
 
 static void __exit telegraph_exit(void)

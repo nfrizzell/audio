@@ -9,6 +9,9 @@ extern "C" {
 #include "stm32_assert.h"
 #endif /* USE_FULL_ASSERT */
 
+#include <stdlib.h>
+#include <stdint.h>
+
 #include "stm32f3xx_ll_i2c.h"
 #include "stm32f3xx_ll_rcc.h"
 #include "stm32f3xx_ll_bus.h"
